@@ -1,5 +1,8 @@
 from typing import List, Literal, Optional, Tuple
 
+from programs.program_parser import ProgramParser
+
+
 # TODO: decidir se as transições de estado (halt/bloqueio) serão sinalizadas
 # via exceções ou por outro mecanismo (ex: retorno de estado, flag no Process)
 class ProcessHalted(Exception):
@@ -216,8 +219,6 @@ class MLFQSimulator:
 
 def main() -> None:
     print("Running mlfq simulator app!")
-
-    from programs.program_parser import ProgramParser
 
     parser = ProgramParser()
 
