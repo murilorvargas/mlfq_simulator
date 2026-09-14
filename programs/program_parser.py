@@ -1,7 +1,7 @@
 import os
 from typing import List, Tuple
 
-from mlfq_simulator_app import Process
+from process import Process
 
 
 class ProgramParser:
@@ -22,10 +22,10 @@ class ProgramParser:
         return name, int(priority_token[4:])
 
     def _parse_instruction(self, state: dict, line: str) -> None:
-        mnemonic, operand = line.split(maxsplit=1)
-        mnemonic, operand = mnemonic.strip().upper(), operand.strip()
+        mnemonic, argument = line.split(maxsplit=1)
+        mnemonic, argument = mnemonic.strip().upper(), argument.strip()
 
-        state["instructions"].append((mnemonic, operand))
+        state["instructions"].append((mnemonic, argument))
 
     def _parse_label(self, state: dict, line: str) -> None:
         label, remainder = line.split(":", 1)
