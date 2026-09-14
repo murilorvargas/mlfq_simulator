@@ -1,0 +1,11 @@
+.code
+  LOAD valor
+  ADD #5       # acc = 10 + 5 = 15
+  STORE valor
+  SYSCALL 1    # Imprime 15 (Bloqueia por 3 UTs no estado BLOQUEADO)
+  SYSCALL 0    # Encerra o processo (HALT)
+.endcode
+
+.data
+  valor 10
+.enddata
