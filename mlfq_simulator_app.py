@@ -48,9 +48,9 @@ class MLFQSimulator:
 def main() -> None:
     print("Running mlfq simulator app!")
 
-    parser = ProgramParser()
+    program_parser = ProgramParser()
 
-    processes = parser.parse_programs()
+    processes = program_parser.parse()
 
     simulator = MLFQSimulator()
 

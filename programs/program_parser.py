@@ -70,7 +70,7 @@ class ProgramParser:
 
         return Process(name, priority, state["data_memory"], state["instructions"], state["labels"])
 
-    def parse_programs(self) -> List[Process]:
+    def parse(self) -> List[Process]:
         processes = []
 
         for filename in sorted(f for f in os.listdir(self.PROGRAMS_DIR) if f.endswith(".txt")):

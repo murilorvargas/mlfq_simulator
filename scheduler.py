@@ -1,23 +1,15 @@
-from typing import List, Literal, Optional
+from typing import List
 
 from process import Process
+from queues import HighLevelQueue, LowLevelQueue
 
-
-class Queue:
-
-    def __init__(self, level: Literal["high", "low"]):
-        self.level: Literal["high", "low"] = level
-        self.ready_processes: List[Process] = []
-        self.executing_process: Optional[Process] = None
-        self.blocked_processes: List[Process] = []
-        self.finished_processes: List[Process] = []
 
 class Scheduler:
 
     def __init__(self):
         self.admitted_processes: List[str] = []
-        self.high_level_queue = Queue("high")
-        self.low_level_queue = Queue("low")
+        self.high_level_queue = HighLevelQueue()
+        self.low_level_queue = LowLevelQueue()
         self.quantum: int = 0
 
     def admit(self, process: Process) -> None:
@@ -26,35 +18,31 @@ class Scheduler:
                 raise ValueError(f"Process name already admitted: {process.name}")
 
         self.admitted_processes.append(process.name)
-        self.high_level_queue.ready_processes.append(process)
+        self.high_level_queue.enqueue_ready(process)
 
     def block(self, process_name: str) -> None:
-        process = self.high_level_queue.executing_process
-        if process is not None and process.name == process_name:
-            self.high_level_queue.executing_process = None
-            self.high_level_queue.blocked_processes.append(process)
+        process = self.high_level_queue.release_executing(process_name)
+        if process is not None:
+            self.high_level_queue.enqueue_blocked(process)
             return
 
-        process = self.low_level_queue.executing_process
-        if process is not None and process.name == process_name:
-            self.low_level_queue.executing_process = None
-            self.low_level_queue.blocked_processes.append(process)
+        process = self.low_level_queue.release_executing(process_name)
+        if process is not None:
+            self.low_level_queue.enqueue_blocked(process)
             return
 
         raise ValueError(f"Process not found in executing processes: {process_name}")
 
     def unblock(self, process_name: str) -> None:
-        for i, p in enumerate(self.high_level_queue.blocked_processes):
-            if p.name == process_name:
-                process = self.high_level_queue.blocked_processes.pop(i)
-                self.high_level_queue.ready_processes.append(process)
-                return
+        process = self.high_level_queue.pop_blocked(process_name)
+        if process is not None:
+            self.high_level_queue.enqueue_ready(process)
+            return
 
-        for i, p in enumerate(self.low_level_queue.blocked_processes):
-            if p.name == process_name:
-                process = self.low_level_queue.blocked_processes.pop(i)
-                self.high_level_queue.ready_processes.append(process)
-                return
+        process = self.low_level_queue.pop_blocked(process_name)
+        if process is not None:
+            self.high_level_queue.enqueue_ready(process)
+            return
 
         raise ValueError(f"Process not found in blocked processes: {process_name}")
 
