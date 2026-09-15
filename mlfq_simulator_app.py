@@ -1,5 +1,6 @@
 from typing import List
 
+from int_handlers import read_int
 from process import Process
 from programs.program_parser import ProgramParser
 from scheduler import Scheduler
@@ -55,7 +56,7 @@ def main() -> None:
     simulator = MLFQSimulator()
 
     for process in processes:
-        arrival_time = int(input(f"[{process.name}] Instante de carga (arrival time): "))
+        arrival_time = read_int(f"[{process.name}] Instante de carga (arrival time): ")
         simulator.schedule_arrival(process, arrival_time)
 
     simulator.run()

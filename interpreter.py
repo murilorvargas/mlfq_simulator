@@ -1,3 +1,4 @@
+from int_handlers import read_int
 from process import Process, ProcessBlockedForInput, ProcessBlockedForOutput, ProcessHalted
 
 
@@ -117,7 +118,7 @@ class Interpreter:
         raise ProcessBlockedForOutput(process)
 
     def _read(self, process: Process) -> None:
-        process.accumulator = int(input(f"[{process.name}] Leitura (SYSCALL 2): "))
+        process.accumulator = read_int(f"[{process.name}] Leitura (SYSCALL 2): ")
         raise ProcessBlockedForInput(process)
 
     def _execute_system(self, process: Process, mnemonic: str, operand: str) -> None:
