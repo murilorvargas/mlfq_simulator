@@ -24,10 +24,14 @@ class MLFQSimulator:
         for process in processes:
             self.scheduler.admit(process)
 
+        del self.arrivals[self.time]
+
     def _unblock_processes(self) -> None:
         processes = self.unblocks[self.time]
         for process in processes:
-             self.scheduler.unblock(process.name)
+            self.scheduler.unblock(process.name)
+
+        del self.unblocks[self.time]
 
     def tick(self) -> None:
         self._admit_arrivals()
