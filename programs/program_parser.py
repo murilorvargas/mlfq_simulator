@@ -59,7 +59,7 @@ class ProgramParser:
         for raw_line in source.splitlines():
             line = raw_line.strip()
 
-            if not line:
+            if line == "":
                 continue
 
             if line in self.section_markers:

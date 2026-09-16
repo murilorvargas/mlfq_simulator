@@ -29,6 +29,12 @@ class Scheduler:
 
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
 
+    def _run_high_level_queue(self) -> bool:
+        ...
+
+    def _run_low_level_queue(self) -> None:
+        ...
+
     def admit(self, process: Process) -> None:
         for admitted_process in self.admitted_processes:
             if admitted_process == process.name:
@@ -59,4 +65,6 @@ class Scheduler:
         raise RuntimeError(f"Process not in the blocked list: '{process_name}'")
 
     def run(self) -> None:
-        ...
+        executed = self._run_high_level_queue()
+        if executed is False:
+            self._run_low_level_queue()
