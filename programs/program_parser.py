@@ -39,8 +39,9 @@ class ProgramParser:
     def _parse_code(self, state: dict, line: str) -> None:
         if ":" in line:
             self._parse_label(state, line)
-        else:
-            self._parse_instruction(state, line)
+            return
+        
+        self._parse_instruction(state, line)
 
     def _parse_data(self, state: dict, line: str) -> None:
         name, value = line.split(maxsplit=1)
