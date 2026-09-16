@@ -51,7 +51,7 @@ class Interpreter:
 
     def _execute_arithmetic(self, process: Process, mnemonic: str, operand: str) -> None:
         if mnemonic not in self.arithmetic_operations:
-            raise ValueError(f"Invalid arithmetic mnemonic: {mnemonic}")
+            raise ValueError(f"Unknown arithmetic mnemonic: '{mnemonic}'")
 
         resolved_operand = self._resolve_operand(process, operand)
         operation_result = self.arithmetic_operations[mnemonic](process.accumulator, resolved_operand)
@@ -65,13 +65,13 @@ class Interpreter:
 
     def _store(self, process: Process, operand: str) -> None:
         if operand.startswith("#"):
-            raise ValueError(f"STORE does not support immediate addressing: {operand}")
+            raise ValueError(f"STORE does not support immediate addressing: '{operand}'")
 
         process.data_memory[operand] = process.accumulator
 
     def _execute_memory(self, process: Process, mnemonic: str, operand: str) -> None:
         if mnemonic not in self.memory_operations:
-            raise ValueError(f"Invalid memory mnemonic: {mnemonic}")
+            raise ValueError(f"Unknown memory mnemonic: '{mnemonic}'")
 
         self.memory_operations[mnemonic](process, operand)
 
@@ -104,7 +104,7 @@ class Interpreter:
 
     def _execute_jump(self, process: Process,  mnemonic: str, label: str) -> bool:
         if mnemonic not in self.jump_operations:
-            raise ValueError(f"Invalid jump mnemonic: {mnemonic}")
+            raise ValueError(f"Unknown jump mnemonic: '{mnemonic}'")
 
         return self.jump_operations[mnemonic](process, label)
 
@@ -123,10 +123,10 @@ class Interpreter:
 
     def _execute_system(self, process: Process, mnemonic: str, operand: str) -> None:
         if mnemonic not in self.system_operations:
-            raise ValueError(f"Invalid system mnemonic: {mnemonic}")
+            raise ValueError(f"Unknown system mnemonic: '{mnemonic}'")
 
         if operand not in self.system_operations[mnemonic]:
-            raise ValueError(f"Invalid system operand: {operand}")
+            raise ValueError(f"Unknown SYSCALL operand: '{operand}'")
 
         self.system_operations[mnemonic][operand](process)
 
@@ -157,4 +157,4 @@ class Interpreter:
             process.program_counter += 1
             return
 
-        raise ValueError(f"Invalid mnemonic: {mnemonic}")
+        raise ValueError(f"Unknown instruction mnemonic: '{mnemonic}'")

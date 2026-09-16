@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Literal, Optional, Tuple
 
 
 class ProcessHalted(Exception):
@@ -21,6 +21,7 @@ class Process:
         labels: dict,
     ) -> None:
         self.name: str = name
+        self.status: Optional[Literal["ready", "executing", "blocked", "finished"]] = None
         self.priority: int = priority
         self.program_counter: int = 0
         self.accumulator: Optional[int] = None
