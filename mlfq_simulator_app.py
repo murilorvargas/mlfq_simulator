@@ -17,7 +17,7 @@ class MLFQSimulator:
     def _admit_arrivals(self) -> None:
         processes = self._arrivals[self._time]
         for process in processes:
-            self._scheduler.admit(process)
+            self._scheduler.admit(process, self._time)
 
         del self._arrivals[self._time]
 
@@ -27,6 +27,14 @@ class MLFQSimulator:
             self._scheduler.unblock(process.name)
 
         del self._unblocks[self._time]
+
+    def _print_periodic_report(self) -> None:
+        # TODO: imprimir o tempo global (t=self._time) e chamar self._scheduler.print_periodic_report(self._time)
+        ...
+
+    def _print_final_report(self) -> None:
+        # TODO: chamar self._scheduler.print_final_report()
+        ...
 
     def schedule_arrival(self, process: Process, arrival_time: int) -> None:
         if arrival_time not in self._arrivals:
@@ -38,7 +46,7 @@ class MLFQSimulator:
         self._admit_arrivals()
         self._unblock_processes()
 
-        self._scheduler.run()
+        self._scheduler.run(self._time)
 
         self._time += 1
 

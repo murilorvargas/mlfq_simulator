@@ -30,18 +30,21 @@ class Scheduler:
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
 
     def _run_high_level_queue(self) -> bool:
+        # TODO: implementar execução Round Robin da Fila 0 (quantum = HIGH_QUANTUM)
         ...
 
     def _run_low_level_queue(self) -> None:
+        # TODO: implementar execução Round Robin com prioridade da Fila 1 (quantum = LOW_QUANTUM)
         ...
 
-    def admit(self, process: Process) -> None:
+    def admit(self, process: Process, time: int) -> None:
         for admitted_process in self._admitted_processes:
             if admitted_process.name == process.name:
                 raise RuntimeError(f"Process already admitted: '{process.name}'")
 
         self._admitted_processes.append(process)
         process.status = "ready"
+        process.admission_time = time
         self._high_level_queue.enqueue(process)
 
     def block(self, process_name: str) -> None:
@@ -64,7 +67,16 @@ class Scheduler:
 
         raise RuntimeError(f"Process not in the blocked list: '{process_name}'")
 
-    def run(self) -> None:
+    def print_periodic_report(self, time: int) -> None:
+        # TODO: imprimir estado de cada processo admitido, a ocupação da CPU (Diagrama de Gantt textual,
+        # com base em self._executing_process) e o conteúdo das Filas 0/1 e da lista de bloqueados
+        ...
+
+    def print_final_report(self) -> None:
+        # TODO: calcular e imprimir Turnaround individual e Tempo Médio de Espera na Fila de Prontos
+        ...
+
+    def run(self, time: int) -> None:
         executed = self._run_high_level_queue()
         if executed is False:
             self._run_low_level_queue()
