@@ -9,41 +9,41 @@ from scheduler import Scheduler
 class MLFQSimulator:
 
     def __init__(self):
-        self.time: int = 0
-        self.scheduler: Scheduler = Scheduler()
-        self.arrivals: dict[int, List[Process]] = {}
-        self.unblocks: dict[int, List[Process]] = {}
+        self._time: int = 0
+        self._scheduler: Scheduler = Scheduler()
+        self._arrivals: dict[int, List[Process]] = {}
+        self._unblocks: dict[int, List[Process]] = {}
 
     def _admit_arrivals(self) -> None:
-        processes = self.arrivals[self.time]
+        processes = self._arrivals[self._time]
         for process in processes:
-            self.scheduler.admit(process)
+            self._scheduler.admit(process)
 
-        del self.arrivals[self.time]
+        del self._arrivals[self._time]
 
     def _unblock_processes(self) -> None:
-        processes = self.unblocks[self.time]
+        processes = self._unblocks[self._time]
         for process in processes:
-            self.scheduler.unblock(process.name)
+            self._scheduler.unblock(process.name)
 
-        del self.unblocks[self.time]
+        del self._unblocks[self._time]
 
     def schedule_arrival(self, process: Process, arrival_time: int) -> None:
-        if arrival_time not in self.arrivals:
-            self.arrivals[arrival_time] = []
+        if arrival_time not in self._arrivals:
+            self._arrivals[arrival_time] = []
 
-        self.arrivals[arrival_time].append(process)
+        self._arrivals[arrival_time].append(process)
 
     def tick(self) -> None:
         self._admit_arrivals()
         self._unblock_processes()
 
-        self.scheduler.run()
+        self._scheduler.run()
 
-        self.time += 1
+        self._time += 1
 
     def run(self) -> None:
-        while self.arrivals or self.unblocks:
+        while self._arrivals or self._unblocks:
             self.tick()
 
 def main() -> None:

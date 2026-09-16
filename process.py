@@ -20,9 +20,9 @@ class Process:
         instructions: List[Tuple[str, str]],
         labels: dict,
     ) -> None:
+        self._priority: int = priority
         self.name: str = name
         self.status: Optional[Literal["ready", "executing", "blocked", "finished"]] = None
-        self.priority: int = priority
         self.program_counter: int = 0
         self.accumulator: Optional[int] = None
         self.data_memory: dict = data_memory

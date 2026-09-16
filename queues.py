@@ -6,14 +6,14 @@ from process import Process
 
 class BaseQueue(ABC):
     def __init__(self):
-        self.processes: List[Process] = []
+        self._processes: List[Process] = []
 
     @abstractmethod
     def enqueue(self, process: Process) -> None:
         ...
 
     def dequeue_next(self) -> Process:
-        return self.processes.pop(0)
+        return self._processes.pop(0)
 
 
 class HighLevelQueue(BaseQueue):

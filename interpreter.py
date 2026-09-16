@@ -5,23 +5,23 @@ from process import Process, ProcessBlockedForInput, ProcessBlockedForOutput, Pr
 class Interpreter:
 
     def __init__(self):
-        self.arithmetic_operations = {
+        self._arithmetic_operations = {
             "ADD": self._add,
             "SUB": self._sub,
             "MULT": self._mult,
             "DIV": self._div,
         }
-        self.memory_operations = {
+        self._memory_operations = {
             "LOAD": self._load,
             "STORE": self._store,
         }
-        self.jump_operations = {
+        self._jump_operations = {
             "BRANY": self._brany,
             "BRPOS": self._brpos,
             "BRZERO": self._brzero,
             "BRNEG": self._brneg,
         }
-        self.system_operations = {
+        self._system_operations = {
             "SYSCALL": {
                 "0": self._exit,
                 "1": self._print,
@@ -50,11 +50,11 @@ class Interpreter:
         return int(accumulator / value)
 
     def _execute_arithmetic(self, process: Process, mnemonic: str, operand: str) -> None:
-        if mnemonic not in self.arithmetic_operations:
+        if mnemonic not in self._arithmetic_operations:
             raise ValueError(f"Unknown arithmetic mnemonic: '{mnemonic}'")
 
         resolved_operand = self._resolve_operand(process, operand)
-        operation_result = self.arithmetic_operations[mnemonic](process.accumulator, resolved_operand)
+        operation_result = self._arithmetic_operations[mnemonic](process.accumulator, resolved_operand)
         process.accumulator = operation_result
 
     # --------- MEMORY OPERATIONS ---------
@@ -70,10 +70,10 @@ class Interpreter:
         process.data_memory[operand] = process.accumulator
 
     def _execute_memory(self, process: Process, mnemonic: str, operand: str) -> None:
-        if mnemonic not in self.memory_operations:
+        if mnemonic not in self._memory_operations:
             raise ValueError(f"Unknown memory mnemonic: '{mnemonic}'")
 
-        self.memory_operations[mnemonic](process, operand)
+        self._memory_operations[mnemonic](process, operand)
 
     # --------- JUMP OPERATIONS ---------
 
@@ -103,10 +103,10 @@ class Interpreter:
         return False
 
     def _execute_jump(self, process: Process,  mnemonic: str, label: str) -> bool:
-        if mnemonic not in self.jump_operations:
+        if mnemonic not in self._jump_operations:
             raise ValueError(f"Unknown jump mnemonic: '{mnemonic}'")
 
-        return self.jump_operations[mnemonic](process, label)
+        return self._jump_operations[mnemonic](process, label)
 
     # --------- SYSTEM OPERATIONS ---------
 
@@ -122,37 +122,37 @@ class Interpreter:
         raise ProcessBlockedForInput(process)
 
     def _execute_system(self, process: Process, mnemonic: str, operand: str) -> None:
-        if mnemonic not in self.system_operations:
+        if mnemonic not in self._system_operations:
             raise ValueError(f"Unknown system mnemonic: '{mnemonic}'")
 
-        if operand not in self.system_operations[mnemonic]:
+        if operand not in self._system_operations[mnemonic]:
             raise ValueError(f"Unknown SYSCALL operand: '{operand}'")
 
-        self.system_operations[mnemonic][operand](process)
+        self._system_operations[mnemonic][operand](process)
 
     # ---------  ---------
 
     def execute_instruction(self, process: Process) -> None:
         mnemonic, argument = process.instructions[process.program_counter]
 
-        if mnemonic in self.arithmetic_operations:
+        if mnemonic in self._arithmetic_operations:
             self._execute_arithmetic(process, mnemonic, argument)
             process.program_counter += 1
             return
 
-        if mnemonic in self.memory_operations:
+        if mnemonic in self._memory_operations:
             self._execute_memory(process, mnemonic, argument)
             process.program_counter += 1
             return
 
-        if mnemonic in self.jump_operations:
+        if mnemonic in self._jump_operations:
             executed = self._execute_jump(process, mnemonic, argument)
             if executed is False:
                 process.program_counter += 1
 
             return
 
-        if mnemonic in self.system_operations:
+        if mnemonic in self._system_operations:
             self._execute_system(process, mnemonic, argument)
             process.program_counter += 1
             return

@@ -9,22 +9,22 @@ class Scheduler:
     LOW_QUANTUM = 4
 
     def __init__(self):
-        self.admitted_processes: List[str] = []
-        self.high_level_queue = HighLevelQueue()
-        self.low_level_queue = LowLevelQueue()
-        self.executing_process: Optional[Process] = None
-        self.executing_level: Optional[Literal["high", "low"]] = None
-        self.blocked_processes: List[Process] = []
-        self.quantum: int = 0
-        self.preempted: Optional[Tuple[str, int]] = None
+        self._admitted_processes: List[Process] = []
+        self._high_level_queue = HighLevelQueue()
+        self._low_level_queue = LowLevelQueue()
+        self._executing_process: Optional[Process] = None
+        self._executing_level: Optional[Literal["high", "low"]] = None
+        self._blocked_processes: List[Process] = []
+        self._quantum: int = 0
+        self._preempted: Optional[Tuple[Process, int]] = None
 
     def _preempt(self, process_name: str) -> None:
-        process = self.executing_process
+        process = self._executing_process
         if process is not None and process.name == process_name:
             process.status = "ready"
-            self.low_level_queue.enqueue_at_group_front(process)
-            self.preempted = process_name, self.quantum
-            self.executing_process = None
+            self._low_level_queue.enqueue_at_group_front(process)
+            self._preempted = process, self._quantum
+            self._executing_process = None
             return
 
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
@@ -36,30 +36,30 @@ class Scheduler:
         ...
 
     def admit(self, process: Process) -> None:
-        for admitted_process in self.admitted_processes:
-            if admitted_process == process.name:
+        for admitted_process in self._admitted_processes:
+            if admitted_process.name == process.name:
                 raise RuntimeError(f"Process already admitted: '{process.name}'")
 
-        self.admitted_processes.append(process.name)
+        self._admitted_processes.append(process)
         process.status = "ready"
-        self.high_level_queue.enqueue(process)
+        self._high_level_queue.enqueue(process)
 
     def block(self, process_name: str) -> None:
-        process = self.executing_process
+        process = self._executing_process
         if process is not None and process.name == process_name:
             process.status = "blocked"
-            self.blocked_processes.append(process)
-            self.executing_process = None
+            self._blocked_processes.append(process)
+            self._executing_process = None
             return
 
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
 
     def unblock(self, process_name: str) -> None:
-        for i, p in enumerate(self.blocked_processes):
+        for i, p in enumerate(self._blocked_processes):
             if p.name == process_name:
-                process = self.blocked_processes.pop(i)
+                process = self._blocked_processes.pop(i)
                 process.status = "ready"
-                self.high_level_queue.enqueue(process)
+                self._high_level_queue.enqueue(process)
                 return
 
         raise RuntimeError(f"Process not in the blocked list: '{process_name}'")

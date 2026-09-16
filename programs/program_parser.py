@@ -9,7 +9,7 @@ class ProgramParser:
     PROGRAMS_DIR = os.path.dirname(os.path.abspath(__file__))
 
     def __init__(self):
-        self.section_markers = {
+        self._section_markers = {
             ".code": self._parse_code,
             ".endcode": None,
             ".data": self._parse_data,
@@ -62,8 +62,8 @@ class ProgramParser:
             if line == "":
                 continue
 
-            if line in self.section_markers:
-                section_parser = self.section_markers[line]
+            if line in self._section_markers:
+                section_parser = self._section_markers[line]
                 continue
 
             if section_parser is not None:
