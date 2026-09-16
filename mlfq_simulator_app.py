@@ -14,12 +14,6 @@ class MLFQSimulator:
         self.arrivals: dict[int, List[Process]] = {}
         self.unblocks: dict[int, List[Process]] = {}
 
-    def schedule_arrival(self, process: Process, arrival_time: int) -> None:
-        if arrival_time not in self.arrivals:
-            self.arrivals[arrival_time] = []
-
-        self.arrivals[arrival_time].append(process)
-
     def _admit_arrivals(self) -> None:
         processes = self.arrivals[self.time]
         for process in processes:
@@ -33,6 +27,12 @@ class MLFQSimulator:
             self.scheduler.unblock(process.name)
 
         del self.unblocks[self.time]
+
+    def schedule_arrival(self, process: Process, arrival_time: int) -> None:
+        if arrival_time not in self.arrivals:
+            self.arrivals[arrival_time] = []
+
+        self.arrivals[arrival_time].append(process)
 
     def tick(self) -> None:
         self._admit_arrivals()
