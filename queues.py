@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List
 
 from process import Process
 
@@ -11,6 +11,9 @@ class BaseQueue(ABC):
     @abstractmethod
     def enqueue(self, process: Process) -> None:
         ...
+
+    def dequeue_next(self) -> Process:
+        return self.processes.pop(0)
 
 
 class HighLevelQueue(BaseQueue):

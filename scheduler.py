@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Literal, Optional, Tuple
 
 from process import Process
 from queues import HighLevelQueue, LowLevelQueue
@@ -13,6 +13,7 @@ class Scheduler:
         self.high_level_queue = HighLevelQueue()
         self.low_level_queue = LowLevelQueue()
         self.executing_process: Optional[Process] = None
+        self.executing_level: Optional[Literal["high", "low"]] = None
         self.blocked_processes: List[Process] = []
         self.quantum: int = 0
         self.preempted: Optional[Tuple[str, int]] = None
