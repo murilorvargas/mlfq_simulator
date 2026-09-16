@@ -18,6 +18,17 @@ class Scheduler:
         self.quantum: int = 0
         self.preempted: Optional[Tuple[str, int]] = None
 
+    def _preempt(self, process_name: str) -> None:
+        process = self.executing_process
+        if process is not None and process.name == process_name:
+            process.status = "ready"
+            self.low_level_queue.enqueue_at_group_front(process)
+            self.preempted = process_name, self.quantum
+            self.executing_process = None
+            return
+
+        raise RuntimeError(f"Process not currently executing: '{process_name}'")
+
     def admit(self, process: Process) -> None:
         for admitted_process in self.admitted_processes:
             if admitted_process == process.name:
@@ -46,17 +57,6 @@ class Scheduler:
                 return
 
         raise RuntimeError(f"Process not in the blocked list: '{process_name}'")
-
-    def preempt(self, process_name: str) -> None:
-        process = self.executing_process
-        if process is not None and process.name == process_name:
-            process.status = "ready"
-            self.low_level_queue.enqueue_at_group_front(process)
-            self.preempted = process_name, self.quantum
-            self.executing_process = None
-            return
-
-        raise RuntimeError(f"Process not currently executing: '{process_name}'")
 
     def run(self) -> None:
         ...
