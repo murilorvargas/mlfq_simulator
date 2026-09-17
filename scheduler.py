@@ -30,49 +30,32 @@ class Scheduler:
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
 
     def _run_high_level_queue(self) -> bool:
-        continuing_high = (
-            self._executing_process is not None
-            and self._executing_level == "high"
-        )
-
-        if not continuing_high:
-            if not self._high_level_queue.processes:
+        if self._executing_process is None and self._executing_level != "high":
+            if self._high_level_queue.has_processes() is False:
                 return False
 
             if self._executing_process is not None:
-                # A Fila 0 interrompe o processo que estava na Fila 1.
                 self._preempt(self._executing_process.name)
 
             process = self._high_level_queue.dequeue_next()
+            process.status = "executing"
             self._executing_process = process
             self._executing_level = "high"
             self._quantum = self.HIGH_QUANTUM
-            process.status = "executing"
 
-        # TODO: executar exatamente uma instrução com o Interpreter e descontar
-        # uma UT de self._quantum, que representa o tempo restante.
-        # TODO: tratar finalização e I/O, avançando o pc da syscall corretamente,
-        # registrando o término ou agendando o desbloqueio após 3 UTs.
-        # TODO: se continuar executável e o quantum acabar, marcar como ready,
-        # inserir na Fila 1 e limpar o processo, nível e quantum da CPU.
-        # TODO: contabilizar os estados durante a UT usando o relógio de run().
+        # TODO: executar uma UT do processo na Fila 0, tratando término, I/O e fim de quantum
         # True reserva esta UT para a Fila 0; a execução ainda será conectada.
         return True
 
     def _run_low_level_queue(self) -> None:
-        continuing_low = (
-            self._executing_process is not None
-            and self._executing_level == "low"
-        )
-
-        if not continuing_low:
-            if not self._low_level_queue.processes:
+        if self._executing_process is None and self._executing_level != "low":
+            if self._low_level_queue.has_processes() is False:
                 return
 
             process = self._low_level_queue.dequeue_next()
+            process.status = "executing"
             self._executing_process = process
             self._executing_level = "low"
-            process.status = "executing"
 
             if self._preempted is not None and self._preempted[0] is process:
                 self._quantum = self._preempted[1]
@@ -80,14 +63,9 @@ class Scheduler:
             else:
                 self._quantum = self.LOW_QUANTUM
 
-            # TODO: guardar quantum interrompido por processo, pois um único
-            # _preempted pode ser sobrescrito por outra preempção antes da retomada.
+            # TODO: guardar quantum interrompido por processo, pois _preempted é único e pode ser sobrescrito
 
-        # TODO: compartilhar com a Fila 0 a execução de uma instrução por chamada,
-        # o consumo de uma UT de quantum e o tratamento de finalização e I/O.
-        # TODO: se continuar executável e o quantum acabar, marcar como ready,
-        # reinserir no final do grupo de prioridade e limpar o estado da CPU.
-        # TODO: contabilizar os estados durante a UT usando o relógio de run().
+        # TODO: executar uma UT do processo na Fila 1, tratando término, I/O e fim de quantum
 
     def admit(self, process: Process, time: int) -> None:
         for admitted_process in self._admitted_processes:
@@ -110,9 +88,9 @@ class Scheduler:
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
 
     def unblock(self, process_name: str) -> None:
-        for i, p in enumerate(self._blocked_processes):
-            if p.name == process_name:
-                process = self._blocked_processes.pop(i)
+        for index, blocked_process in enumerate(self._blocked_processes):
+            if blocked_process.name == process_name:
+                process = self._blocked_processes.pop(index)
                 process.status = "ready"
                 self._high_level_queue.enqueue(process)
                 return

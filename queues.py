@@ -15,6 +15,9 @@ class BaseQueue(ABC):
     def dequeue_next(self) -> Process:
         return self.processes.pop(0)
 
+    def has_processes(self) -> bool:
+        return len(self.processes) > 0
+
 
 class HighLevelQueue(BaseQueue):
 
