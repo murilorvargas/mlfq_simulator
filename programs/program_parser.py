@@ -8,12 +8,15 @@ class ProgramParser:
 
     PROGRAMS_DIR = os.path.dirname(os.path.abspath(__file__))
 
+    _SECTION_MARKERS = {
+        ".code": ".endcode",
+        ".data": ".enddata",
+    }
+
     def __init__(self):
-        self._section_markers = {
+        self._section_parsers = {
             ".code": self._parse_code,
-            ".endcode": None,
             ".data": self._parse_data,
-            ".enddata": None,
         }
 
     def _parse_filename(self, filename: str) -> Tuple[str, int]:
@@ -55,19 +58,32 @@ class ProgramParser:
 
         state = {"instructions": [], "labels": {}, "data_memory": {}}
 
-        section_parser = None
+        start_marker = None
         for raw_line in source.splitlines():
             line = raw_line.strip()
 
             if line == "":
                 continue
 
-            if line in self._section_markers:
-                section_parser = self._section_markers[line]
+            if line in self._SECTION_MARKERS:
+                if start_marker is not None:
+                    raise ValueError(f"Unclosed section marker: '{start_marker}'")
+                start_marker = line
                 continue
 
-            if section_parser is not None:
-                section_parser(state, line)
+            if line in self._SECTION_MARKERS.values():
+                if start_marker is None or line != self._SECTION_MARKERS[start_marker]:
+                    raise ValueError(f"Unmatched section marker: '{line}'")
+                start_marker = None
+                continue
+
+            if start_marker is None:
+                raise ValueError(f"Content outside of any section: '{line}'")
+
+            self._section_parsers[start_marker](state, line)
+
+        if start_marker is not None:
+            raise ValueError(f"Unclosed section marker: '{start_marker}'")
 
         return Process(name, priority, state["data_memory"], state["instructions"], state["labels"])
 
