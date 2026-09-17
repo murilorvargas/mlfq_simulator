@@ -26,9 +26,17 @@ class HighLevelQueue(BaseQueue):
 class LowLevelQueue(BaseQueue):
 
     def enqueue(self, process: Process) -> None:
-        # TODO: implementar inserção ordenada por prioridade (com desempate FIFO) na Fila 1
-        ...
+        for index, queued_process in enumerate(self.processes):
+            if queued_process.priority < process.priority:
+                self.processes.insert(index, process)
+                return
+
+        self.processes.append(process)
 
     def enqueue_at_group_front(self, process: Process) -> None:
-        # TODO: implementar reinserção no topo do grupo de prioridade do processo
-        ...
+        for index, queued_process in enumerate(self.processes):
+            if queued_process.priority <= process.priority:
+                self.processes.insert(index, process)
+                return
+
+        self.processes.append(process)
