@@ -31,14 +31,6 @@ class MLFQSimulator:
 
             del self._unblocks[self._time]
 
-    def _print_periodic_report(self) -> None:
-        # TODO: imprimir o tempo global (t=self._time) e chamar self._scheduler.print_periodic_report(self._time)
-        ...
-
-    def _print_final_report(self) -> None:
-        # TODO: chamar self._scheduler.print_final_report()
-        ...
-
     def schedule_arrival(self, process: Process, arrival_time: int) -> None:
         if self._arrivals.get(arrival_time) is None:
             self._arrivals[arrival_time] = []
@@ -61,29 +53,36 @@ class MLFQSimulator:
         except ProcessHalted:
             ...
 
-        self._print_periodic_report()
         self._time += 1
 
     def run(self) -> None:
         while self._arrivals or self._scheduler.has_pending_processes():
             self.tick()
 
-        self._print_final_report()
+        self._scheduler.print_final_report()
 
 def main() -> None:
-    print("Running mlfq simulator app!")
+    print("=== EXECUTANDO SIMULAÇÃO ===")
 
     program_parser = ProgramParser()
 
-    processes = program_parser.parse()
+    try:
+        processes = program_parser.parse()
+    except ValueError as error:
+        print(f"Erro ao carregar os programas: {error}")
+        return
 
     simulator = MLFQSimulator()
 
     for process in processes:
+        print(f"[{process.name}] Prioridade: {process.priority} | Memória: {process.memory_size} posições")
         arrival_time = read_int(f"[{process.name}] Instante de carga (arrival time): ")
         simulator.schedule_arrival(process, arrival_time)
 
-    simulator.run()
+    try:
+        simulator.run()
+    except (ValueError, RuntimeError) as error:
+        print(f"Erro de execução: {error}")
 
 if __name__ == "__main__":
     main()

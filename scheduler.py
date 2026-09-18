@@ -20,6 +20,7 @@ class Scheduler:
         self._blocked_processes: List[Process] = []
         self._quantum: Optional[int] = None
         self._preempted: Optional[Tuple[Process, int]] = None
+        self._cpu_timeline: List[Optional[Process]] = []
 
     def _track_dwell_time(self) -> None:
         for process in self._high_level_queue.processes:
@@ -33,6 +34,17 @@ class Scheduler:
 
         for process in self._blocked_processes:
             process.track_dwell_time()
+
+    def _print_periodic_report(self, time: int) -> None:
+        # TODO: imprimir o tempo global (time), o estado de cada processo admitido, a ocupação da CPU
+        # (Diagrama de Gantt textual, com base em self._executing_process) e o conteúdo das Filas 0/1
+        # e da lista de bloqueados
+        ...
+
+    def _report_time_unit(self, time: int) -> None:
+        self._track_dwell_time()
+        self._cpu_timeline.append(self._executing_process)
+        self._print_periodic_report(time)
 
     def _requeue(self, process_name: str) -> None:
         process = self._executing_process
@@ -101,7 +113,7 @@ class Scheduler:
         self._quantum = 1
 
     def _run_interpreter(self, time: int) -> None:
-        self._track_dwell_time()
+        self._report_time_unit(time)
 
         try:
             self._interpreter.run_instruction(self._executing_process)
@@ -141,7 +153,7 @@ class Scheduler:
     def _run_low_level_queue(self, time: int) -> None:
         if self._executing_level != "low":
             if self._low_level_queue.has_processes() is False:
-                self._track_dwell_time()
+                self._report_time_unit(time)
                 return
 
             process = self._low_level_queue.dequeue_next()
@@ -189,13 +201,9 @@ class Scheduler:
 
         return False
 
-    def print_periodic_report(self, time: int) -> None:
-        # TODO: imprimir estado de cada processo admitido, a ocupação da CPU (Diagrama de Gantt textual,
-        # com base em self._executing_process) e o conteúdo das Filas 0/1 e da lista de bloqueados
-        ...
-
     def print_final_report(self) -> None:
-        # TODO: calcular e imprimir Turnaround individual e Tempo Médio de Espera na Fila de Prontos
+        # TODO: imprimir o Diagrama de Gantt completo (self._cpu_timeline) e calcular e imprimir
+        # Turnaround individual e Tempo Médio de Espera na Fila de Prontos
         ...
 
     def run(self, time: int) -> None:

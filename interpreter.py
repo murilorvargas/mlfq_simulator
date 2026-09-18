@@ -33,6 +33,9 @@ class Interpreter:
         if operand.startswith("#"):
             return int(operand[1:])
 
+        if process.data_memory.get(operand) is None:
+            raise ValueError(f"Unknown variable: '{operand}'")
+
         return process.data_memory[operand]
 
     def _add(self, accumulator: int, value: int) -> int:
@@ -45,6 +48,9 @@ class Interpreter:
         return accumulator * value
 
     def _div(self, accumulator: int, value: int) -> int:
+        if value == 0:
+            raise ValueError("Division by zero")
+
         return int(accumulator / value)
 
     def _execute_arithmetic(self, process: Process, mnemonic: str, operand: str) -> None:
@@ -99,6 +105,9 @@ class Interpreter:
     def _execute_jump(self, process: Process,  mnemonic: str, label: str) -> bool:
         if mnemonic not in self._jump_operations:
             raise ValueError(f"Unknown jump mnemonic: '{mnemonic}'")
+
+        if process.labels.get(label) is None:
+            raise ValueError(f"Unknown label: '{label}'")
 
         return self._jump_operations[mnemonic](process, label)
 

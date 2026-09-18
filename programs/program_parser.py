@@ -8,6 +8,9 @@ class ProgramParser:
 
     PROGRAMS_DIR = os.path.dirname(os.path.abspath(__file__))
 
+    MIN_PRIORITY = 1
+    MAX_PRIORITY = 5
+
     _SECTION_MARKERS = {
         ".code": ".endcode",
         ".data": ".enddata",
@@ -21,8 +24,12 @@ class ProgramParser:
 
     def _parse_filename(self, filename: str) -> Tuple[str, int]:
         name, priority_token, *_ = filename.split("-")
+        priority = int(priority_token[4:])
 
-        return name, int(priority_token[4:])
+        if priority < self.MIN_PRIORITY or priority > self.MAX_PRIORITY:
+            raise ValueError(f"Priority out of range in '{filename}': {priority}")
+
+        return name, priority
 
     def _parse_instruction(self, state: dict, line: str) -> None:
         mnemonic, argument = line.split(maxsplit=1)

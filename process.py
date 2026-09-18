@@ -28,6 +28,7 @@ class Process:
         self.data_memory: dict = data_memory
         self.instructions: List[Tuple[str, str]] = instructions
         self.labels: dict = labels
+        self.memory_size: int = len(instructions) + len(data_memory)
         self.dwell_time: dict = {"ready": 0, "executing": 0, "blocked": 0}
         self.admission_time: Optional[int] = None
         self.finish_time: Optional[int] = None
