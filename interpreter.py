@@ -35,8 +35,6 @@ class Interpreter:
 
         return process.data_memory[operand]
 
-    # --------- ARITHMETIC OPERATIONS ---------
-
     def _add(self, accumulator: int, value: int) -> int:
         return accumulator + value
 
@@ -57,8 +55,6 @@ class Interpreter:
         operation_result = self._arithmetic_operations[mnemonic](process.accumulator, resolved_operand)
         process.accumulator = operation_result
 
-    # --------- MEMORY OPERATIONS ---------
-
     def _load(self, process: Process, operand: str) -> None:
         resolved_operand = self._resolve_operand(process, operand)
         process.accumulator = resolved_operand
@@ -74,8 +70,6 @@ class Interpreter:
             raise ValueError(f"Unknown memory mnemonic: '{mnemonic}'")
 
         self._memory_operations[mnemonic](process, operand)
-
-    # --------- JUMP OPERATIONS ---------
 
     def _brany(self, process: Process, label: str) -> bool:
         process.program_counter = process.labels[label]
@@ -108,8 +102,6 @@ class Interpreter:
 
         return self._jump_operations[mnemonic](process, label)
 
-    # --------- SYSTEM OPERATIONS ---------
-
     def _exit(self, process: Process) -> None:
         raise ProcessHalted(process)
 
@@ -130,9 +122,10 @@ class Interpreter:
 
         self._system_operations[mnemonic][operand](process)
 
-    # ---------  ---------
-
     def execute_instruction(self, process: Process) -> None:
+        if process is None:
+            raise RuntimeError("Cannot execute instruction: no process is currently executing")
+
         mnemonic, argument = process.instructions[process.program_counter]
 
         if mnemonic in self._arithmetic_operations:
@@ -153,8 +146,11 @@ class Interpreter:
             return
 
         if mnemonic in self._system_operations:
-            self._execute_system(process, mnemonic, argument)
-            process.program_counter += 1
+            try:
+                self._execute_system(process, mnemonic, argument)
+            except (ProcessBlockedForOutput, ProcessBlockedForInput) as exception:
+                process.program_counter += 1
+                raise exception
             return
 
         raise ValueError(f"Unknown instruction mnemonic: '{mnemonic}'")

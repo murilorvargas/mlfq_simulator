@@ -22,9 +22,7 @@ class BaseQueue(ABC):
 class HighLevelQueue(BaseQueue):
 
     def enqueue(self, process: Process) -> None:
-        # TODO: implementar entrada FIFO no final da Fila 0
-        ...
-
+        self.processes.append(process)
 
 class LowLevelQueue(BaseQueue):
 

@@ -1,6 +1,7 @@
 from typing import List, Literal, Optional, Tuple
 
-from process import Process
+from interpreter import Interpreter
+from process import Process, ProcessBlockedForInput, ProcessBlockedForOutput, ProcessHalted
 from queues import HighLevelQueue, LowLevelQueue
 
 
@@ -9,13 +10,15 @@ class Scheduler:
     LOW_QUANTUM = 4
 
     def __init__(self):
+        self._interpreter = Interpreter()
+
         self._admitted_processes: List[Process] = []
         self._high_level_queue = HighLevelQueue()
         self._low_level_queue = LowLevelQueue()
         self._executing_process: Optional[Process] = None
         self._executing_level: Optional[Literal["high", "low"]] = None
         self._blocked_processes: List[Process] = []
-        self._quantum: int = 0
+        self._quantum: Optional[int] = None
         self._preempted: Optional[Tuple[Process, int]] = None
 
     def _preempt(self, process_name: str) -> None:
@@ -25,6 +28,21 @@ class Scheduler:
             self._low_level_queue.enqueue_at_group_front(process)
             self._preempted = process, self._quantum
             self._executing_process = None
+            return
+
+        raise RuntimeError(f"Process not currently executing: '{process_name}'")
+
+    def _demote(self, process_name: str) -> None:
+        if self._executing_level != "high":
+            raise RuntimeError(f"Process not currently executing in Fila 0: '{process_name}'")
+
+        process = self._executing_process
+        if process is not None and process.name == process_name:
+            process.status = "ready"
+            self._executing_process = None
+            self._executing_level = None
+            self._low_level_queue.enqueue(process)
+            self._quantum = None
             return
 
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
@@ -39,6 +57,28 @@ class Scheduler:
 
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
 
+    def _finish(self, process_name: str) -> None:
+        process = self._executing_process
+        if process is not None and process.name == process_name:
+            process.status = "finished"
+            self._executing_process = None
+            self._executing_level = None
+            self._quantum = None
+            return
+
+        raise RuntimeError(f"Process not currently executing: '{process_name}'")
+
+    def _execute_interpreter(self) -> None:
+        try:
+            self._interpreter.execute_instruction(self._executing_process)
+        except (ProcessBlockedForOutput, ProcessBlockedForInput) as exception: 
+            process: Process = exception.args[0]
+            self._block(process.name)
+            raise exception
+        except ProcessHalted:
+            process: Process = exception.args[0]
+            self._finish(process.name)
+    
     def _run_high_level_queue(self) -> bool:
         if self._executing_process is None and self._executing_level != "high":
             if self._high_level_queue.has_processes() is False:
@@ -51,10 +91,23 @@ class Scheduler:
             process.status = "executing"
             self._executing_process = process
             self._executing_level = "high"
-            self._quantum = self.HIGH_QUANTUM
+            self._quantum = 1
+        else:
+            if self._quantum == self.HIGH_QUANTUM:
+                self._demote(self._executing_process.name)
+                
+                if self._high_level_queue.has_processes() is False:
+                    return False
 
-        # TODO: executar uma UT do processo na Fila 0, tratando término, I/O e fim de quantum
-        # True reserva esta UT para a Fila 0; a execução ainda será conectada.
+                process = self._high_level_queue.dequeue_next()
+                process.status = "executing"
+                self._executing_process = process
+                self._executing_level = "high"
+                self._quantum = 1
+            else:
+                self._quantum += 1
+
+        self._execute_interpreter()
         return True
 
     def _run_low_level_queue(self) -> None:
@@ -71,11 +124,25 @@ class Scheduler:
                 self._quantum = self._preempted[1]
                 self._preempted = None
             else:
-                self._quantum = self.LOW_QUANTUM
+                self._quantum = 1
+        else:
+            if self._quantum == self.LOW_QUANTUM:
+                process = self._executing_process
+                process.status = "ready"
+                self._executing_process = None
+                self._executing_level = None
+                self._low_level_queue.enqueue(process)
+                self._quantum = None
 
-            # TODO: guardar quantum interrompido por processo, pois _preempted é único e pode ser sobrescrito
+                process = self._low_level_queue.dequeue_next()
+                process.status = "executing"
+                self._executing_process = process
+                self._executing_level = "low"
+                self._quantum = 1
+            else:
+                self._quantum += 1
 
-        # TODO: executar uma UT do processo na Fila 1, tratando término, I/O e fim de quantum
+        self._execute_interpreter()
 
     def admit(self, process: Process, time: int) -> None:
         for admitted_process in self._admitted_processes:

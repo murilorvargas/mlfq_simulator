@@ -1,7 +1,7 @@
 from typing import List
 
 from int_handlers import read_int
-from process import Process
+from process import Process, ProcessBlockedForInput, ProcessBlockedForOutput, ProcessHalted
 from programs.program_parser import ProgramParser
 from scheduler import Scheduler
 
@@ -46,7 +46,17 @@ class MLFQSimulator:
         self._admit_arrivals()
         self._unblock_processes()
 
-        self._scheduler.run(self._time)
+        try:
+            self._scheduler.run(self._time)
+        except (ProcessBlockedForOutput, ProcessBlockedForInput) as exception:
+            process: Process = exception.args[0]
+            unblock_time = self._time + 3
+            if self._unblocks.get(unblock_time) is None:
+                self._unblocks[unblock_time] = []
+
+            self._unblocks[unblock_time].append(process)
+        except ProcessHalted:
+            ...
 
         self._time += 1
 
