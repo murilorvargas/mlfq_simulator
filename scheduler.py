@@ -66,6 +66,8 @@ class Scheduler:
             process.status = "blocked"
             self._blocked_processes.append(process)
             self._executing_process = None
+            self._executing_level = None
+            self._quantum = None
             return
 
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
@@ -89,12 +91,12 @@ class Scheduler:
             process: Process = exception.args[0]
             self._block(process.name)
             raise exception
-        except ProcessHalted:
+        except ProcessHalted as exception:
             process: Process = exception.args[0]
             self._finish(process.name, time)
     
     def _run_high_level_queue(self, time: int) -> bool:
-        if self._executing_process is None and self._executing_level != "high":
+        if self._executing_level != "high":
             if self._high_level_queue.has_processes() is False:
                 return False
 
@@ -125,7 +127,7 @@ class Scheduler:
         return True
 
     def _run_low_level_queue(self, time: int) -> None:
-        if self._executing_process is None and self._executing_level != "low":
+        if self._executing_level != "low":
             if self._low_level_queue.has_processes() is False:
                 return
 
@@ -177,6 +179,13 @@ class Scheduler:
                 return
 
         raise RuntimeError(f"Process not in the blocked list: '{process_name}'")
+
+    def has_pending_processes(self) -> bool:
+        for process in self._admitted_processes:
+            if process.status != "finished":
+                return True
+
+        return False
 
     def print_periodic_report(self, time: int) -> None:
         # TODO: imprimir estado de cada processo admitido, a ocupação da CPU (Diagrama de Gantt textual,

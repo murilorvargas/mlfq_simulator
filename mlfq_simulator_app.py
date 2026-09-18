@@ -7,6 +7,7 @@ from scheduler import Scheduler
 
 
 class MLFQSimulator:
+    IO_BLOCK_DURATION = 3
 
     def __init__(self):
         self._time: int = 0
@@ -15,18 +16,20 @@ class MLFQSimulator:
         self._unblocks: dict[int, List[Process]] = {}
 
     def _admit_arrivals(self) -> None:
-        processes = self._arrivals[self._time]
-        for process in processes:
-            self._scheduler.admit(process, self._time)
+        if self._arrivals.get(self._time) is not None:
+            processes = self._arrivals[self._time]
+            for process in processes:
+                self._scheduler.admit(process, self._time)
 
-        del self._arrivals[self._time]
+            del self._arrivals[self._time]
 
     def _unblock_processes(self) -> None:
-        processes = self._unblocks[self._time]
-        for process in processes:
-            self._scheduler.unblock(process.name)
+        if self._unblocks.get(self._time) is not None:
+            processes = self._unblocks[self._time]
+            for process in processes:
+                self._scheduler.unblock(process.name)
 
-        del self._unblocks[self._time]
+            del self._unblocks[self._time]
 
     def _print_periodic_report(self) -> None:
         # TODO: imprimir o tempo global (t=self._time) e chamar self._scheduler.print_periodic_report(self._time)
@@ -37,7 +40,7 @@ class MLFQSimulator:
         ...
 
     def schedule_arrival(self, process: Process, arrival_time: int) -> None:
-        if arrival_time not in self._arrivals:
+        if self._arrivals.get(arrival_time) is None:
             self._arrivals[arrival_time] = []
 
         self._arrivals[arrival_time].append(process)
@@ -50,7 +53,7 @@ class MLFQSimulator:
             self._scheduler.run(self._time)
         except (ProcessBlockedForOutput, ProcessBlockedForInput) as exception:
             process: Process = exception.args[0]
-            unblock_time = self._time + 3
+            unblock_time = self._time + 1 + self.IO_BLOCK_DURATION
             if self._unblocks.get(unblock_time) is None:
                 self._unblocks[unblock_time] = []
 
@@ -58,11 +61,14 @@ class MLFQSimulator:
         except ProcessHalted:
             ...
 
+        self._print_periodic_report()
         self._time += 1
 
     def run(self) -> None:
-        while self._arrivals or self._unblocks:
+        while self._arrivals or self._scheduler.has_pending_processes():
             self.tick()
+
+        self._print_final_report()
 
 def main() -> None:
     print("Running mlfq simulator app!")

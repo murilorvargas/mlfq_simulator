@@ -60,10 +60,13 @@ class ProgramParser:
 
         start_marker = None
         for raw_line in source.splitlines():
-            line = raw_line.strip()
+            line = raw_line.partition("# ")[0].strip()
 
             if line == "":
                 continue
+
+            if line[:1] == "#":
+                raise ValueError(f"Unexpected '#' at line start: '{line}'")
 
             if line in self._SECTION_MARKERS:
                 if start_marker is not None:
