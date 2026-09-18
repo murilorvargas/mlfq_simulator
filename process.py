@@ -33,5 +33,5 @@ class Process:
         self.finish_time: Optional[int] = None
 
     def track_status_time(self) -> None:
-        # TODO: incrementar status_time[self.status] com a UT atual
-        ...
+        if self.status_time.get(self.status) is not None:
+            self.status_time[self.status] += 1
