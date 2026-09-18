@@ -34,9 +34,25 @@ class Scheduler:
         for process in self._blocked_processes:
             process.track_dwell_time()
 
+    def _requeue(self, process_name: str) -> None:
+        process = self._executing_process
+        if process is not None and process.name == process_name:
+            process.status = "ready"
+            self._executing_process = None
+            self._executing_level = None
+            self._low_level_queue.enqueue(process)
+            self._quantum = None
+            return
+
+        raise RuntimeError(f"Process not currently executing: '{process_name}'")
+
     def _preempt(self, process_name: str) -> None:
         process = self._executing_process
         if process is not None and process.name == process_name:
+            if self._quantum == self.LOW_QUANTUM:
+                self._requeue(process_name)
+                return
+
             process.status = "ready"
             self._low_level_queue.enqueue_at_group_front(process)
             self._preempted = process, self._quantum
@@ -49,16 +65,7 @@ class Scheduler:
         if self._executing_level != "high":
             raise RuntimeError(f"Process not currently executing in Fila 0: '{process_name}'")
 
-        process = self._executing_process
-        if process is not None and process.name == process_name:
-            process.status = "ready"
-            self._executing_process = None
-            self._executing_level = None
-            self._low_level_queue.enqueue(process)
-            self._quantum = None
-            return
-
-        raise RuntimeError(f"Process not currently executing: '{process_name}'")
+        self._requeue(process_name)
 
     def _block(self, process_name: str) -> None:
         process = self._executing_process
@@ -134,6 +141,7 @@ class Scheduler:
     def _run_low_level_queue(self, time: int) -> None:
         if self._executing_level != "low":
             if self._low_level_queue.has_processes() is False:
+                self._track_dwell_time()
                 return
 
             process = self._low_level_queue.dequeue_next()
@@ -141,15 +149,11 @@ class Scheduler:
 
             if self._preempted is not None and self._preempted[0] is process:
                 self._quantum = self._preempted[1] + 1
-                self._preempted = None
+
+            self._preempted = None
         else:
             if self._quantum == self.LOW_QUANTUM:
-                process = self._executing_process
-                process.status = "ready"
-                self._executing_process = None
-                self._executing_level = None
-                self._low_level_queue.enqueue(process)
-                self._quantum = None
+                self._requeue(self._executing_process.name)
 
                 process = self._low_level_queue.dequeue_next()
                 self._execute(process, "low")

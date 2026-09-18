@@ -24,7 +24,7 @@ class Process:
         self.status: Optional[Literal["ready", "executing", "blocked", "finished"]] = None
         self.priority: int = priority
         self.program_counter: int = 0
-        self.accumulator: Optional[int] = None
+        self.accumulator: int = 0
         self.data_memory: dict = data_memory
         self.instructions: List[Tuple[str, str]] = instructions
         self.labels: dict = labels

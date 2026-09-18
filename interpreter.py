@@ -103,6 +103,7 @@ class Interpreter:
         return self._jump_operations[mnemonic](process, label)
 
     def _exit(self, process: Process) -> None:
+        print(f"[{process.name}] Finalizado (SYSCALL 0)")
         raise ProcessHalted(process)
 
     def _print(self, process: Process) -> None:
