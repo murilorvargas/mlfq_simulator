@@ -122,7 +122,7 @@ class Interpreter:
 
         self._system_operations[mnemonic][operand](process)
 
-    def execute_instruction(self, process: Process) -> None:
+    def run_instruction(self, process: Process) -> None:
         if process is None:
             raise RuntimeError("Cannot execute instruction: no process is currently executing")
 

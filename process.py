@@ -28,10 +28,10 @@ class Process:
         self.data_memory: dict = data_memory
         self.instructions: List[Tuple[str, str]] = instructions
         self.labels: dict = labels
-        self.status_time: dict = {"ready": 0, "executing": 0, "blocked": 0}
+        self.dwell_time: dict = {"ready": 0, "executing": 0, "blocked": 0}
         self.admission_time: Optional[int] = None
         self.finish_time: Optional[int] = None
 
-    def track_status_time(self) -> None:
-        if self.status_time.get(self.status) is not None:
-            self.status_time[self.status] += 1
+    def track_dwell_time(self) -> None:
+        if self.dwell_time.get(self.status) is not None:
+            self.dwell_time[self.status] += 1

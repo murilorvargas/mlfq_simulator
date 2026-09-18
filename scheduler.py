@@ -21,18 +21,18 @@ class Scheduler:
         self._quantum: Optional[int] = None
         self._preempted: Optional[Tuple[Process, int]] = None
 
-    def _track_status_time(self) -> None:
+    def _track_dwell_time(self) -> None:
         for process in self._high_level_queue.processes:
-            process.track_status_time()
+            process.track_dwell_time()
 
         for process in self._low_level_queue.processes:
-            process.track_status_time()
+            process.track_dwell_time()
 
         if self._executing_process is not None:
-            self._executing_process.track_status_time()
+            self._executing_process.track_dwell_time()
 
         for process in self._blocked_processes:
-            process.track_status_time()
+            process.track_dwell_time()
 
     def _preempt(self, process_name: str) -> None:
         process = self._executing_process
@@ -84,9 +84,20 @@ class Scheduler:
 
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
 
-    def _execute_interpreter(self, time: int) -> None:
+    def _execute(self, process: Process, level: Literal["high", "low"]) -> None:
+        if self._executing_process is not None:
+            raise RuntimeError(f"Process already executing: '{self._executing_process.name}'")
+
+        process.status = "executing"
+        self._executing_process = process
+        self._executing_level = level
+        self._quantum = 1
+
+    def _run_interpreter(self, time: int) -> None:
+        self._track_dwell_time()
+
         try:
-            self._interpreter.execute_instruction(self._executing_process)
+            self._interpreter.run_instruction(self._executing_process)
         except (ProcessBlockedForOutput, ProcessBlockedForInput) as exception:
             process: Process = exception.args[0]
             self._block(process.name)
@@ -104,26 +115,20 @@ class Scheduler:
                 self._preempt(self._executing_process.name)
 
             process = self._high_level_queue.dequeue_next()
-            process.status = "executing"
-            self._executing_process = process
-            self._executing_level = "high"
-            self._quantum = 1
+            self._execute(process, "high")
         else:
             if self._quantum == self.HIGH_QUANTUM:
                 self._demote(self._executing_process.name)
-                
+
                 if self._high_level_queue.has_processes() is False:
                     return False
 
                 process = self._high_level_queue.dequeue_next()
-                process.status = "executing"
-                self._executing_process = process
-                self._executing_level = "high"
-                self._quantum = 1
+                self._execute(process, "high")
             else:
                 self._quantum += 1
 
-        self._execute_interpreter(time)
+        self._run_interpreter(time)
         return True
 
     def _run_low_level_queue(self, time: int) -> None:
@@ -132,15 +137,11 @@ class Scheduler:
                 return
 
             process = self._low_level_queue.dequeue_next()
-            process.status = "executing"
-            self._executing_process = process
-            self._executing_level = "low"
+            self._execute(process, "low")
 
             if self._preempted is not None and self._preempted[0] is process:
-                self._quantum = self._preempted[1]
+                self._quantum = self._preempted[1] + 1
                 self._preempted = None
-            else:
-                self._quantum = 1
         else:
             if self._quantum == self.LOW_QUANTUM:
                 process = self._executing_process
@@ -151,14 +152,11 @@ class Scheduler:
                 self._quantum = None
 
                 process = self._low_level_queue.dequeue_next()
-                process.status = "executing"
-                self._executing_process = process
-                self._executing_level = "low"
-                self._quantum = 1
+                self._execute(process, "low")
             else:
                 self._quantum += 1
 
-        self._execute_interpreter(time)
+        self._run_interpreter(time)
 
     def admit(self, process: Process, time: int) -> None:
         for admitted_process in self._admitted_processes:
@@ -197,8 +195,6 @@ class Scheduler:
         ...
 
     def run(self, time: int) -> None:
-        self._track_status_time()
-
         executed = self._run_high_level_queue(time)
         if executed is False:
             self._run_low_level_queue(time)
