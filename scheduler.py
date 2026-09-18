@@ -29,6 +29,16 @@ class Scheduler:
 
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
 
+    def _block(self, process_name: str) -> None:
+        process = self._executing_process
+        if process is not None and process.name == process_name:
+            process.status = "blocked"
+            self._blocked_processes.append(process)
+            self._executing_process = None
+            return
+
+        raise RuntimeError(f"Process not currently executing: '{process_name}'")
+
     def _run_high_level_queue(self) -> bool:
         if self._executing_process is None and self._executing_level != "high":
             if self._high_level_queue.has_processes() is False:
@@ -76,16 +86,6 @@ class Scheduler:
         process.status = "ready"
         process.admission_time = time
         self._high_level_queue.enqueue(process)
-
-    def block(self, process_name: str) -> None:
-        process = self._executing_process
-        if process is not None and process.name == process_name:
-            process.status = "blocked"
-            self._blocked_processes.append(process)
-            self._executing_process = None
-            return
-
-        raise RuntimeError(f"Process not currently executing: '{process_name}'")
 
     def unblock(self, process_name: str) -> None:
         for index, blocked_process in enumerate(self._blocked_processes):
