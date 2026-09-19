@@ -69,6 +69,9 @@ class Interpreter:
         if operand.startswith("#"):
             raise ValueError(f"STORE does not support immediate addressing: '{operand}'")
 
+        if process.data_memory.get(operand) is None:
+            raise ValueError(f"Unknown variable: '{operand}'")
+
         process.data_memory[operand] = process.accumulator
 
     def _execute_memory(self, process: Process, mnemonic: str, operand: str) -> None:
@@ -135,6 +138,9 @@ class Interpreter:
     def run_instruction(self, process: Process) -> None:
         if process is None:
             raise RuntimeError("Cannot execute instruction: no process is currently executing")
+
+        if process.program_counter >= len(process.instructions):
+            raise RuntimeError(f"Process '{process.name}' ran past the end of its code (missing SYSCALL 0)")
 
         mnemonic, argument = process.instructions[process.program_counter]
 
