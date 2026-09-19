@@ -11,7 +11,7 @@ class ProgramParser:
     MIN_PRIORITY = 1
     MAX_PRIORITY = 5
 
-    _SECTION_MARKERS = {
+    SECTION_MARKERS = {
         ".code": ".endcode",
         ".data": ".enddata",
     }
@@ -59,6 +59,20 @@ class ProgramParser:
 
         state["data_memory"][name] = int(value)
 
+    def _strip_comment(self, line: str) -> str:
+        for index, character in enumerate(line):
+            if character != "#":
+                continue
+
+            operand = line[index + 1:]
+            if operand[:1] == "-":
+                operand = operand[1:]
+
+            if operand[:1].isdigit() is False:
+                return line[:index]
+
+        return line
+
     def _parse_file(self, path: str, name: str, priority: int) -> Process:
         with open(path) as source_file:
             source = source_file.read()
@@ -67,7 +81,7 @@ class ProgramParser:
 
         start_marker = None
         for raw_line in source.splitlines():
-            line = raw_line.partition("# ")[0].strip()
+            line = self._strip_comment(raw_line).strip()
 
             if line == "":
                 continue
@@ -75,14 +89,14 @@ class ProgramParser:
             if line[:1] == "#":
                 raise ValueError(f"Unexpected '#' at line start: '{line}'")
 
-            if line in self._SECTION_MARKERS:
+            if line in self.SECTION_MARKERS:
                 if start_marker is not None:
                     raise ValueError(f"Unclosed section marker: '{start_marker}'")
                 start_marker = line
                 continue
 
-            if line in self._SECTION_MARKERS.values():
-                if start_marker is None or line != self._SECTION_MARKERS[start_marker]:
+            if line in self.SECTION_MARKERS.values():
+                if start_marker is None or line != self.SECTION_MARKERS[start_marker]:
                     raise ValueError(f"Unmatched section marker: '{line}'")
                 start_marker = None
                 continue

@@ -69,6 +69,8 @@ class Scheduler:
             self._low_level_queue.enqueue_at_group_front(process)
             self._preempted = process, self._quantum
             self._executing_process = None
+            self._executing_level = None
+            self._quantum = None
             return
 
         raise RuntimeError(f"Process not currently executing: '{process_name}'")
@@ -204,6 +206,10 @@ class Scheduler:
     def print_final_report(self) -> None:
         # TODO: imprimir o Diagrama de Gantt completo (self._cpu_timeline) e calcular e imprimir
         # Turnaround individual e Tempo Médio de Espera na Fila de Prontos
+        # admission_time e finish_time são as UTs em que o processo foi admitido e em que executou o
+        # SYSCALL 0. Como ele ocupou a CPU durante toda a UT de finalização, ela conta no tempo de
+        # vida: Turnaround = finish_time + 1 - admission_time, e não finish_time - admission_time
+        # O Tempo de Espera na Fila de Prontos de cada processo é dwell_time["ready"]
         ...
 
     def run(self, time: int) -> None:

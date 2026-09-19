@@ -1,15 +1,23 @@
 from typing import List
 
-from int_handlers import read_int
+from int_handlers import read_option, read_positive_int
 from process import Process, ProcessBlockedForInput, ProcessBlockedForOutput, ProcessHalted
 from programs.program_parser import ProgramParser
 from scheduler import Scheduler
 
 
+# TODO: criar 2 casos de teste próprios do grupo em programs/ (padrão NOME-PRIOn-descricao.txt) e
+# detalhar a simulação dos dois no manual do usuário, conforme o item 4 do enunciado. Os programas
+# P1 e P2 do item 5 são os de validação fornecidos pelo professor e não contam como casos do grupo
+# Sugestão de cobertura, que P1 e P2 não exercitam: preempção da Fila 1 por processo chegando na
+# Fila 0, estouro do quantum de 4 UTs da Fila 1, empate de prioridade (desempate FIFO) e SYSCALL 2
+
+
 class MLFQSimulator:
     IO_BLOCK_DURATION = 3
 
-    def __init__(self):
+    def __init__(self, automatic_stepping: bool):
+        self._automatic_stepping: bool = automatic_stepping
         self._time: int = 0
         self._scheduler: Scheduler = Scheduler()
         self._arrivals: dict[int, List[Process]] = {}
@@ -31,13 +39,7 @@ class MLFQSimulator:
 
             del self._unblocks[self._time]
 
-    def schedule_arrival(self, process: Process, arrival_time: int) -> None:
-        if self._arrivals.get(arrival_time) is None:
-            self._arrivals[arrival_time] = []
-
-        self._arrivals[arrival_time].append(process)
-
-    def tick(self) -> None:
+    def _tick(self) -> None:
         self._admit_arrivals()
         self._unblock_processes()
 
@@ -55,9 +57,18 @@ class MLFQSimulator:
 
         self._time += 1
 
+    def schedule_arrival(self, process: Process, arrival_time: int) -> None:
+        if self._arrivals.get(arrival_time) is None:
+            self._arrivals[arrival_time] = []
+
+        self._arrivals[arrival_time].append(process)
+
     def run(self) -> None:
         while self._arrivals or self._scheduler.has_pending_processes():
-            self.tick()
+            if self._automatic_stepping is False:
+                input(f"[UT {self._time}] Pressione ENTER para avançar: ")
+
+            self._tick()
 
         self._scheduler.print_final_report()
 
@@ -72,11 +83,13 @@ def main() -> None:
         print(f"Erro ao carregar os programas: {error}")
         return
 
-    simulator = MLFQSimulator()
+    stepping = read_option("Avanço do tempo: [1] automático | [2] manual: ", [1, 2])
+
+    simulator = MLFQSimulator(stepping == 1)
 
     for process in processes:
         print(f"[{process.name}] Prioridade: {process.priority} | Memória: {process.memory_size} posições")
-        arrival_time = read_int(f"[{process.name}] Instante de carga (arrival time): ")
+        arrival_time = read_positive_int(f"[{process.name}] Instante de carga (arrival time): ")
         simulator.schedule_arrival(process, arrival_time)
 
     try:
