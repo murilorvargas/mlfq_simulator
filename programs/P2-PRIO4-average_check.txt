@@ -1,0 +1,24 @@
+.code
+  LOAD total          # O acumulador recebe o valor da variável total
+  DIV #4              # Divide o acumulador pelas 4 amostras
+  STORE media         # A variável media recebe o valor do acumulador
+  SYSCALL 1           # Imprime a média e bloqueia por 3 UTs
+
+  LOAD media          # O acumulador recebe o valor da variável media
+  SUB #10             # Subtrai o limite de 10 do acumulador
+  BRNEG abaixo        # Se o acumulador é negativo, a média ficou abaixo do limite
+
+  LOAD #1             # O acumulador recebe 1, sinalizando média dentro do limite
+  SYSCALL 1           # Imprime o acumulador e bloqueia por 3 UTs
+  SYSCALL 0           # Encerra após voltar do bloqueio
+
+abaixo:
+  LOAD #0             # O acumulador recebe 0, sinalizando média abaixo do limite
+  SYSCALL 1           # Imprime o acumulador e bloqueia por 3 UTs
+  SYSCALL 0           # Encerra após voltar do bloqueio
+.endcode
+
+.data
+  total 48
+  media 0
+.enddata

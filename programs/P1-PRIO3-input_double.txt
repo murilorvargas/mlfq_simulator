@@ -1,0 +1,29 @@
+.code
+  SYSCALL 2           # Lê um inteiro e coloca no acumulador
+  STORE restantes     # A variável restantes recebe o valor do acumulador
+
+verificar:
+  LOAD restantes      # O acumulador recebe o valor da variável restantes
+  BRZERO fim          # Se o acumulador é 0, terminou
+  BRANY dobrar        # Caso contrário, vai dobrar mais uma vez
+
+dobrar:
+  LOAD valor          # O acumulador recebe o valor da variável valor
+  MULT #2             # O acumulador é multiplicado por 2
+  STORE valor         # A variável valor recebe o valor do acumulador
+
+  LOAD restantes      # O acumulador recebe o valor da variável restantes
+  SUB #1              # Subtrai 1 do acumulador
+  STORE restantes     # A variável restantes recebe o novo valor do acumulador
+  BRANY verificar     # Volta para conferir se ainda falta algum dobramento
+
+fim:
+  LOAD valor          # O acumulador recebe o resultado guardado em valor
+  SYSCALL 1           # Imprime o acumulador e bloqueia por 3 UTs
+  SYSCALL 0           # Encerra após voltar do bloqueio
+.endcode
+
+.data
+  valor 1
+  restantes 0
+.enddata

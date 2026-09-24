@@ -59,7 +59,7 @@ class MLFQSimulator:
     def run(self) -> None:
         while self._arrivals or self._scheduler.has_pending_processes():
             if self._automatic_stepping is False:
-                input(f"[UT {self._time}] Pressione ENTER para avançar: ")
+                input("Pressione ENTER para avançar: ")
 
             self._tick()
 
