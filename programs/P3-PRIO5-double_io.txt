@@ -1,0 +1,15 @@
+.code
+  LOAD numero
+  ADD #8       # acc = 12 + 8 = 20
+  STORE numero
+  SYSCALL 1    # Imprime 20 (bloqueia por 3 UTs)
+  LOAD numero
+  ADD #4       # acc = 20 + 4 = 24
+  STORE numero
+  SYSCALL 1    # Imprime 24 (bloqueia por 3 UTs)
+  SYSCALL 0    # Encerra o processo (HALT)
+.endcode
+
+.data
+  numero 12
+.enddata
